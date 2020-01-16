@@ -1,5 +1,6 @@
 #include <SPI.h>
 #include <PS3BT.h>      //Include the necessary libraries.
+#include <TimerOne.h>
 
 #define enA 9 //lewy
 #define in1 4
@@ -8,8 +9,13 @@
 #define in3 6
 #define in4 7
 
-int motorSpeedA = 0;
-int motorSpeedB = 0;
+int clk = 10;
+int pwmMax = 255;
+volatile int motorSpeedA = 0;
+volatile int motorSpeedB = 0;
+int cnt = 0;
+
+void pwm(int p);
 
 USB Usb;
 BTD Btd(&Usb);
@@ -24,6 +30,9 @@ void setup() {
     while (1); //halt
   }
   Serial.print(F("\r\nPS3 Bluetooth Library Started"));
+
+  Timer1.initialize(clk);
+  Timer1.attachInterrupt(pwm);
   
   //engines setup
   pinMode(enA, OUTPUT);
@@ -33,8 +42,6 @@ void setup() {
   pinMode(in3, OUTPUT);
   pinMode(in4, OUTPUT);
 
-  analogWrite(enA, 0);
-  analogWrite(enB, 0);
 }
 
 void loop() {
@@ -79,9 +86,6 @@ void loop() {
           if (motorSpeedB < 0) motorSpeedB = 0;
           if (motorSpeedA > 255) motorSpeedA = 255;
       }
-
-    analogWrite(enA, motorSpeedA);
-    analogWrite(enB, motorSpeedB);
       
     }
 
@@ -93,4 +97,20 @@ void loop() {
     }
   }
 
+}
+
+void pwm(){
+  
+  cnt++;  if (cnt >= pwmMax) cnt = 0;
+  if(cnt < motorSpeedA){
+    digitalWrite(enA, HIGH);
+  }  else if(cnt == motorSpeedA) {
+    digitalWrite(enA, LOW);
+  }
+
+  if(cnt < motorSpeedB){
+    digitalWrite(enB, HIGH);
+  }  else if(cnt == motorSpeedB) {
+    digitalWrite(enB, LOW);
+  }
 }
